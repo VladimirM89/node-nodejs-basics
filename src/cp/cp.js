@@ -1,16 +1,18 @@
 import { fork } from 'node:child_process';
+import { dirname } from "path";
+import { fileURLToPath } from "node:url";
 
 const spawnChildProcess = async (args) => {
-    console.log(args);
+    const __dirname = dirname(fileURLToPath(import.meta.url));
 
-    const childProcess = fork('./src/cp/files/script.js', args, {stdio: ['pipe', 'pipe', 'pipe','ipc']});
+    const childProcess = fork(`${__dirname}/files/script.js`, args, {stdio: ['pipe', 'pipe', 'pipe', 'ipc']});
 
-    process.stdin.pipe(childProcess.stdin);
+    process.stdin.on('data', (msg) => childProcess.stdin.write(msg));
 
-    childProcess.stdout.pipe(process.stdout);
+    childProcess.stdout.on('data', (msg) => process.stdout.write(msg));
 
-    childProcess.send('process.stdin');
+    childProcess.on('exit', () => process.exit())
 
 };
 
-spawnChildProcess(['someArgument1', 'someArgument2']);
+spawnChildProcess(['--someArgument1', '--someArgument2']);
